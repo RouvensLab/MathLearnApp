@@ -210,6 +210,11 @@
                     <label for="videoDuration">⏱️ Video Reward Duration (seconds):</label>
                     <input type="number" id="videoDuration" min="10" value="60" class="shadow-sm">
                 </div>
+                <!-- Add API Key input -->
+                <div class="input-group md:col-span-2">
+                    <label for="ytApiKey">🔑 YouTube API Key:</label>
+                    <input type="text" id="ytApiKey" class="shadow-sm" placeholder="Enter your YouTube API key">
+                </div>
             </div>
 
             <div class="input-group mt-4">
@@ -269,6 +274,8 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
         const videoDurationInput = document.getElementById('videoDuration');
         const youtubeLinksInput = document.getElementById('youtubeLinks');
         const startButton = document.getElementById('startButton');
+        // Add API key input
+        const ytApiKeyInput = document.getElementById('ytApiKey');
 
         const progressBarFill = document.getElementById('progressBarFill');
         const mathQuestionDiv = document.getElementById('mathQuestion');
@@ -350,6 +357,7 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
                     questionsForRewardInput.value = savedSettings.questionsNeeded || 10;
                     videoDurationInput.value = savedSettings.videoRewardDuration || 60;
                     youtubeLinksInput.value = savedSettings.youtubeVideoList ? savedSettings.youtubeVideoList.join('\n') : '';
+                    ytApiKeyInput.value = savedSettings.ytApiKey || '';
 
                     // Update game state variables based on loaded settings
                     minNumber = parseInt(minNumberInput.value);
@@ -357,6 +365,7 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
                     questionsNeeded = parseInt(questionsForRewardInput.value);
                     videoRewardDuration = parseInt(videoDurationInput.value);
                     youtubeVideoList = youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== '');
+                    ytApiKey = ytApiKeyInput.value;
                 } else {
                     // If no saved settings, ensure default values are applied to inputs and state
                     resetDefaultSettings();
@@ -383,9 +392,11 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
                 maxNumber: parseInt(maxNumberInput.value),
                 questionsNeeded: parseInt(questionsForRewardInput.value),
                 videoRewardDuration: parseInt(videoDurationInput.value),
-                youtubeVideoList: youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== '')
+                youtubeVideoList: youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== ''),
+                ytApiKey: ytApiKeyInput.value.trim()
             };
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
+            ytApiKey = ytApiKeyInput.value.trim();
             console.log("Settings saved:", settingsToSave);
         }
 
@@ -563,12 +574,10 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
             if (myPlayer && myPlayer.loadNewUrls) {
                 lastPlayerProgress = loadPlayerProgress();
                 myPlayer.loadNewUrls(youtubeVideoList.join('\n'), lastPlayerProgress);
-                // Play the player when reward is shown
-                setTimeout(() => {
-                    if (myPlayer && myPlayer.player && typeof myPlayer.player.playVideo === "function") {
-                        myPlayer.player.playVideo();
-                    }
-                }, 1000);
+                // Play the player when reward is shown (autoplay immediately)
+                if (myPlayer && myPlayer.player) {
+                    myPlayer.player.playVideo();
+                }
             }
 
             // Timer logic for reward duration
@@ -659,12 +668,14 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
             questionsForRewardInput.value = 10;
             videoDurationInput.value = 60;
             youtubeLinksInput.value = ''; // Clear video links
+            ytApiKeyInput.value = ''; // Clear API key
 
             minNumber = 0;
             maxNumber = 100;
             questionsNeeded = 10;
             videoRewardDuration = 60;
             youtubeVideoList = [];
+            ytApiKey = '';
             currentCorrectAnswers = 0; // Reset progress state
             saveSettings(); // Save defaults
             saveProgress(); // Save reset progress
@@ -679,6 +690,7 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
             questionsNeeded = parseInt(questionsForRewardInput.value);
             videoRewardDuration = parseInt(videoDurationInput.value);
             youtubeVideoList = youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== '');
+            ytApiKey = ytApiKeyInput.value.trim();
 
             if (isNaN(minNumber) || isNaN(maxNumber) || minNumber < 0 || maxNumber < 1 || minNumber >= maxNumber) {
                 alert("Please set valid number ranges (Minimum Number must be less than Maximum Number, and both must be valid numbers).");
@@ -692,13 +704,17 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
                 alert("Please set a valid video duration (at least 10 seconds).");
                 return;
             }
-            // YouTube links are optional, so no strict validation needed here.
+            if (!ytApiKey) {
+                alert("Please enter your YouTube API key.");
+                return;
+            }
 
             saveSettings();
             // Create the player instance but do NOT show it yet
             const playerDiv = document.getElementById('myVideoPlayer');
             const myUrls = youtubeVideoList.join('\n');
-            const myApiKey = "AIzaSyALE2SNNPJmq5sPywUO3JNUeDALsJ2UGe4"; // <-- Replace with your API key
+            // Use the user-provided API key
+            // const myApiKey = "AIzaSyALE2SNNPJmq5sPywUO3JNUeDALsJ2UGe4"; // <-- Remove hardcoded API key
 
             // Destroy previous player if exists
             if (myPlayer && myPlayer.player) {
@@ -708,7 +724,7 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
             lastPlayerProgress = loadPlayerProgress();
             myPlayer = new PlaylistVideoPlayer(playerDiv, myUrls, {
                 initialProgress: lastPlayerProgress,
-                ytApiKey: myApiKey,
+                ytApiKey: ytApiKey,
                 enableFullscreen: true,
                 hideControlsDelay: 3000,
                 paused: true, // Start paused
