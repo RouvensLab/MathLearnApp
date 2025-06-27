@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Learner Adventure!</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="playlistVideoPlayer.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0f2f7; /* Light blue background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .input-group input[type="number"],
+        .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #a7d9f7;
+            border-radius: 12px;
+            font-size: 1rem;
+            color: #2c3e50;
+            background-color: #f0faff;
+            transition: border-color 0.3s ease;
+        }
+        .input-group input[type="number"]:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+        .button {
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.15);
+        }
+        .button-primary {
+            background-image: linear-gradient(to right, #6dd5ed, #2193b0);
+            color: white;
+            border: none;
+        }
+        .button-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        .button-danger {
+            background-image: linear-gradient(to right, #f76b1c, #ea1d6f);
+            color: white;
+            border: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+        .button-danger:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0f7fa;
+            border-radius: 15px;
+            height: 30px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-image: linear-gradient(to right, #4CAF50, #8bc34a); /* Green gradient */
+            border-radius: 15px;
+            transition: width 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .math-question {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .feedback {
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 15px;
+            min-height: 30px;
+        }
+        .feedback.correct {
+            color: #28a745;
+        }
+        .feedback.incorrect {
+            color: #dc3545;
+        }
+        .youtube-player-container {
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            position: relative;
+            background-color: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .youtube-player-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+        }
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            .section-title {
+                font-size: 1.5rem;
+            }
+            .math-question {
+                font-size: 2rem;
+            }
+            .button {
+                font-size: 1rem;
+                padding: 10px 20px;
+            }
+            .button-danger {
+                top: 10px;
+                right: 10px;
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-5">
+    <div class="container relative">
+        <button id="resetButton" class="button button-danger hidden">Reset All</button>
+
+        <!-- Settings Section -->
+        <div id="settingsSection" class="flex flex-col gap-4">
+            <h1 class="section-title">🚀 Math Adventure Setup! 🚀</h1>
+            <p class="text-center text-gray-600 mb-4">Set up your learning journey. All settings will be saved automatically!</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="input-group">
+                    <label for="minNumber">🔢 Minimum Number:</label>
+                    <input type="number" id="minNumber" min="0" value="0" class="shadow-sm">
+                </div>
+                <div class="input-group">
+                    <label for="maxNumber">🎯 Maximum Number:</label>
+                    <input type="number" id="maxNumber" min="1" value="100" class="shadow-sm">
+                </div>
+                <div class="input-group">
+                    <label for="questionsForReward">🏆 Questions for Reward:</label>
+                    <input type="number" id="questionsForReward" min="1" value="10" class="shadow-sm">
+                </div>
+                <div class="input-group">
+                    <label for="videoDuration">⏱️ Video Reward Duration (seconds):</label>
+                    <input type="number" id="videoDuration" min="10" value="60" class="shadow-sm">
+                </div>
+            </div>
+
+            <div class="input-group mt-4">
+                <label for="youtubeLinks">📺 YouTube Video Links (one per line):</label>
+                <textarea id="youtubeLinks" rows="5" class="shadow-sm" placeholder="e.g.,
+https://www.youtube.com/watch?v=dQw4w9WgXcQ
+https://www.youtube.com/watch?v=some_other_video"></textarea>
+            </div>
+
+            <button id="startButton" class="button button-primary mt-6">Start Math Adventure!</button>
+        </div>
+
+        <!-- Math Game Section -->
+        <div id="gameSection" class="hidden flex-col gap-4">
+            <h1 class="section-title">🧠 Solve the Math Problem! 🧠</h1>
+
+            <div class="progress-bar-container">
+                <div id="progressBarFill" class="progress-bar-fill">0%</div>
+            </div>
+
+            <div class="math-question" id="mathQuestion"></div>
+
+            <div class="input-group flex items-center justify-center gap-4">
+                <label for="answerInput" class="sr-only">Your Answer</label>
+                <input type="number" id="answerInput" class="w-40 text-center text-2xl p-3 border-blue-400 rounded-lg shadow-md" placeholder="?">
+                <button id="submitAnswerButton" class="button button-primary w-28">Submit</button>
+            </div>
+
+            <div id="feedback" class="feedback"></div>
+        </div>
+
+        <!-- YouTube Player Section -->
+        <div id="videoSection" class="hidden flex-col gap-4">
+            <h1 class="section-title">🎉 Time for a Reward! 🎉</h1>
+            <!-- Remove the old iframe-based player from the videoSection -->
+            <!--
+            <div class="youtube-player-container">
+                <iframe id="youtubePlayer" allow="autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0"></iframe>
+            </div>
+            <p id="videoTimer" class="text-center text-xl font-semibold text-gray-700 mt-4"></p>
+            -->
+            <!-- Add the custom player container -->
+            <div id="myVideoPlayer" style="margin-top:24px;"></div>
+            <p id="videoTimer" class="text-center text-xl font-semibold text-gray-700 mt-4"></p>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const settingsSection = document.getElementById('settingsSection');
+        const gameSection = document.getElementById('gameSection');
+        const videoSection = document.getElementById('videoSection');
+
+        const minNumberInput = document.getElementById('minNumber');
+        const maxNumberInput = document.getElementById('maxNumber');
+        const questionsForRewardInput = document.getElementById('questionsForReward');
+        const videoDurationInput = document.getElementById('videoDuration');
+        const youtubeLinksInput = document.getElementById('youtubeLinks');
+        const startButton = document.getElementById('startButton');
+
+        const progressBarFill = document.getElementById('progressBarFill');
+        const mathQuestionDiv = document.getElementById('mathQuestion');
+        const answerInput = document.getElementById('answerInput');
+        const submitAnswerButton = document.getElementById('submitAnswerButton');
+        const feedbackDiv = document.getElementById('feedback');
+        const videoTimerDisplay = document.getElementById('videoTimer');
+        const resetButton = document.getElementById('resetButton');
+
+        // Game State Variables
+        let minNumber = 0;
+        let maxNumber = 100;
+        let questionsNeeded = 10;
+        let videoRewardDuration = 60; // seconds
+        let youtubeVideoList = [];
+        let currentCorrectAnswers = 0;
+        let currentQuestion = { num1: 0, num2: 0, operator: '+', answer: 0 };
+        let videoTimerId = null;
+
+        // Playlist and video progress tracking
+        let currentPlaylistId = null;
+        let currentPlaylistIndex = 0;
+        let currentPlaylistTime = 0;
+
+        const LOCAL_STORAGE_KEY = 'mathAdventureSettings';
+        const LOCAL_STORAGE_PROGRESS_KEY = 'mathAdventureProgress';
+        const LOCAL_STORAGE_VIDEO_PROGRESS_KEY = 'mathAdventureVideoProgress';
+
+        // --- PlaylistVideoPlayer Integration ---
+        let myPlayer = null;
+        let lastPlayerProgress = 0; // Progress (0-1) to resume from
+        const PLAYER_PROGRESS_KEY = "mathAdventurePlayerProgress";
+
+        // Helper to save player progress to localStorage
+        function savePlayerProgress(progress) {
+            localStorage.setItem(PLAYER_PROGRESS_KEY, JSON.stringify({ progress }));
+        }
+
+        // Helper to load player progress from localStorage
+        function loadPlayerProgress() {
+            try {
+                const data = JSON.parse(localStorage.getItem(PLAYER_PROGRESS_KEY));
+                return (data && typeof data.progress === "number") ? data.progress : 0;
+            } catch {
+                return 0;
+            }
+        }
+
+        /**
+         * Helper function to control section visibility.
+         * Hides all sections then shows the specified one.
+         * Also manages the visibility of the reset button.
+         * @param {HTMLElement} sectionToShow - The section to make visible.
+         */
+        function showSection(sectionToShow) {
+            settingsSection.classList.add('hidden');
+            gameSection.classList.add('hidden');
+            videoSection.classList.add('hidden');
+            sectionToShow.classList.remove('hidden');
+
+            // Manage reset button visibility
+            if (sectionToShow === settingsSection) {
+                resetButton.classList.remove('hidden'); // Show reset button on settings page
+            } else {
+                resetButton.classList.add('hidden'); // Hide reset button on game/video pages
+            }
+        }
+
+        /**
+         * Loads settings and progress from local storage.
+         * Populates input fields and updates global state variables.
+         */
+        function loadSettingsAndProgress() {
+            try {
+                const savedSettings = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
+                if (savedSettings) {
+                    minNumberInput.value = savedSettings.minNumber || 0;
+                    maxNumberInput.value = savedSettings.maxNumber || 100;
+                    questionsForRewardInput.value = savedSettings.questionsNeeded || 10;
+                    videoDurationInput.value = savedSettings.videoRewardDuration || 60;
+                    youtubeLinksInput.value = savedSettings.youtubeVideoList ? savedSettings.youtubeVideoList.join('\n') : '';
+
+                    // Update game state variables based on loaded settings
+                    minNumber = parseInt(minNumberInput.value);
+                    maxNumber = parseInt(maxNumberInput.value);
+                    questionsNeeded = parseInt(questionsForRewardInput.value);
+                    videoRewardDuration = parseInt(videoDurationInput.value);
+                    youtubeVideoList = youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== '');
+                } else {
+                    // If no saved settings, ensure default values are applied to inputs and state
+                    resetDefaultSettings();
+                }
+
+                const savedProgress = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PROGRESS_KEY));
+                if (savedProgress) {
+                    currentCorrectAnswers = savedProgress.currentCorrectAnswers || 0;
+                    updateProgressBar(); // Update bar based on loaded progress
+                }
+            } catch (error) {
+                console.error("Error loading settings or progress from local storage:", error);
+                // Fallback to default values if loading fails
+                resetDefaultSettings();
+            }
+        }
+
+        /**
+         * Saves current settings to local storage.
+         */
+        function saveSettings() {
+            const settingsToSave = {
+                minNumber: parseInt(minNumberInput.value),
+                maxNumber: parseInt(maxNumberInput.value),
+                questionsNeeded: parseInt(questionsForRewardInput.value),
+                videoRewardDuration: parseInt(videoDurationInput.value),
+                youtubeVideoList: youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== '')
+            };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
+            console.log("Settings saved:", settingsToSave);
+        }
+
+        /**
+         * Saves current progress to local storage.
+         */
+        function saveProgress() {
+            const progressToSave = {
+                currentCorrectAnswers: currentCorrectAnswers
+            };
+            localStorage.setItem(LOCAL_STORAGE_PROGRESS_KEY, JSON.stringify(progressToSave));
+            console.log("Progress saved:", progressToSave);
+        }
+
+        /**
+         * Helper: Extract playlist ID from URL
+         * @param {string} url - The YouTube URL
+         * @returns {string|null} - The extracted playlist ID or null if not a playlist URL
+         */
+        function extractPlaylistId(url) {
+            const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : null;
+        }
+
+        /**
+         * Helper: Save video progress (playlist/video, index, time)
+         * @param {Object} data - The progress data
+         */
+        function saveVideoProgress(data) {
+            localStorage.setItem(LOCAL_STORAGE_VIDEO_PROGRESS_KEY, JSON.stringify(data));
+        }
+
+        /**
+         * Helper: Load video progress
+         * @returns {Object} - The loaded progress data
+         */
+        function loadVideoProgress() {
+            try {
+                return JSON.parse(localStorage.getItem(LOCAL_STORAGE_VIDEO_PROGRESS_KEY)) || {};
+            } catch {
+                return {};
+            }
+        }
+
+        /**
+         * Generates a random integer within a specified range (inclusive).
+         * @param {number} min - The minimum value.
+         * @param {number} max - The maximum value.
+         * @returns {number} A random integer.
+         */
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        /**
+         * Generates a new math question (addition or subtraction).
+         */
+        function generateQuestion() {
+            const num1 = getRandomInt(minNumber, maxNumber);
+            const num2 = getRandomInt(minNumber, maxNumber);
+            const operator = Math.random() < 0.5 ? '+' : '-'; // Randomly choose + or -
+
+            let answer;
+            let questionText;
+
+            if (operator === '+') {
+                answer = num1 + num2;
+                questionText = `${num1} + ${num2} = ?`;
+            } else {
+                // Ensure the result is not negative for subtraction if num1 < num2
+                if (num1 < num2) {
+                    // Swap them to ensure num1 >= num2 for positive results
+                    questionText = `${num2} - ${num1} = ?`;
+                    answer = num2 - num1;
+                } else {
+                    questionText = `${num1} - ${num2} = ?`;
+                    answer = num1 - num2;
+                }
+            }
+
+            currentQuestion = { num1, num2, operator, answer };
+            mathQuestionDiv.textContent = questionText;
+            answerInput.value = ''; // Clear previous answer
+            feedbackDiv.textContent = ''; // Clear feedback
+            answerInput.focus(); // Focus on the input field
+        }
+
+        /**
+         * Updates the progress bar visually with a non-linear growth.
+         * The growth is faster at the beginning and slows down towards the end.
+         * Formula: P = 100 * (1 - (1 - n/N)^k) where k=2 (quadratic)
+         */
+        function updateProgressBar() {
+            if (questionsNeeded === 0) { // Avoid division by zero
+                progressBarFill.style.width = '0%';
+                progressBarFill.textContent = '0%';
+                return;
+            }
+            const progressRatio = currentCorrectAnswers / questionsNeeded;
+            // Apply a non-linear curve (e.g., quadratic for k=2).
+            // (1 - x)^2 results in values that decrease slower at the start and faster at the end.
+            // So, 1 - (1 - x)^2 makes the progress bar fill faster at the start.
+            const nonLinearProgress = 1 - Math.pow((1 - progressRatio), 2);
+            const percentage = Math.min(100, Math.max(0, nonLinearProgress * 100)); // Clamp between 0 and 100
+
+            progressBarFill.style.width = `${percentage}%`;
+            progressBarFill.textContent = `${Math.round(percentage)}%`;
+
+            saveProgress(); // Save progress whenever it updates
+        }
+
+        /**
+         * Handles the submission of an answer.
+         */
+        function handleSubmitAnswer() {
+            const userAnswer = parseInt(answerInput.value);
+
+            if (isNaN(userAnswer)) {
+                feedbackDiv.textContent = "Please enter a number!";
+                feedbackDiv.className = 'feedback incorrect';
+                return;
+            }
+
+            if (userAnswer === currentQuestion.answer) {
+                feedbackDiv.textContent = "🥳 Correct! Keep going!";
+                feedbackDiv.className = 'feedback correct';
+                currentCorrectAnswers++;
+                updateProgressBar();
+                if (currentCorrectAnswers >= questionsNeeded) {
+                    // Reward time!
+                    showVideoReward();
+                } else {
+                    setTimeout(generateQuestion, 500); // Generate new question after a short delay
+                }
+            } else {
+                feedbackDiv.textContent = `❌ Incorrect. The answer was ${currentQuestion.answer}. Try again!`;
+                feedbackDiv.className = 'feedback incorrect';
+                // Shrink progress bar on incorrect answer
+                currentCorrectAnswers = Math.max(0, currentCorrectAnswers - 1); // Decrement, but not below 0
+                updateProgressBar();
+                setTimeout(generateQuestion, 1500); // Generate a new question if incorrect
+            }
+            answerInput.value = ''; // Clear input for next try
+        }
+
+        // --- PlaylistVideoPlayer Integration ---
+        // Only create the player when showing the video reward section
+        function showVideoReward() {
+            showSection(videoSection);
+
+            if (youtubeVideoList.length === 0) {
+                videoTimerDisplay.textContent = 'No video links available. Please add some in the settings.';
+                setTimeout(resetRewardAndGoToMath, 3000);
+                return;
+            }
+
+            // Show the player and resume from last progress
+            const playerDiv = document.getElementById('myVideoPlayer');
+            playerDiv.style.display = ""; // Show the player
+
+            // Request fullscreen for the player container
+            if (playerDiv.requestFullscreen) {
+                playerDiv.requestFullscreen();
+            } else if (playerDiv.webkitRequestFullscreen) {
+                playerDiv.webkitRequestFullscreen();
+            } else if (playerDiv.mozRequestFullScreen) {
+                playerDiv.mozRequestFullScreen();
+            } else if (playerDiv.msRequestFullscreen) {
+                playerDiv.msRequestFullscreen();
+            }
+
+            // If player exists, reload URLs and progress if needed
+            if (myPlayer && myPlayer.loadNewUrls) {
+                lastPlayerProgress = loadPlayerProgress();
+                myPlayer.loadNewUrls(youtubeVideoList.join('\n'), lastPlayerProgress);
+                // Play the player when reward is shown
+                setTimeout(() => {
+                    if (myPlayer && myPlayer.player && typeof myPlayer.player.playVideo === "function") {
+                        myPlayer.player.playVideo();
+                    }
+                }, 1000);
+            }
+
+            // Timer logic for reward duration
+            let timeLeft = videoRewardDuration;
+            videoTimerDisplay.textContent = `Video playing for ${timeLeft} seconds...`;
+            if (window.videoTimerId) clearInterval(window.videoTimerId);
+            window.videoTimerId = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(window.videoTimerId);
+                    // Save progress before leaving
+                    if (myPlayer && myPlayer.totalDuration && myPlayer.player && typeof myPlayer.player.getCurrentTime === "function") {
+                        let elapsedGlobal = 0;
+                        for (let i = 0; i < myPlayer.currentIndex; ++i) {
+                            elapsedGlobal += myPlayer.videoDurations[i] || 0;
+                        }
+                        elapsedGlobal += myPlayer.player.getCurrentTime();
+                        let progress = Math.min(elapsedGlobal / myPlayer.totalDuration, 1);
+                        savePlayerProgress(progress);
+                        lastPlayerProgress = progress;
+                    }
+                    if (myPlayer && myPlayer.player) myPlayer.player.pauseVideo();
+                    resetRewardAndGoToMath();
+                } else {
+                    videoTimerDisplay.textContent = `Video playing for ${timeLeft} seconds...`;
+                }
+            }, 1000);
+        }
+
+        /**
+         * Resets the reward state and goes back to math questions.
+         */
+        function resetRewardAndGoToMath() {
+            // Stop and destroy the player
+            if (myPlayer && myPlayer.player) {
+                myPlayer.player.pauseVideo();
+                // Optionally keep the player instance for next reward, just hide it
+                document.getElementById('myVideoPlayer').style.display = "none";
+            }
+            // Exit fullscreen if active (fixes focus/click issues)
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else if (document.webkitFullscreenElement) {
+                document.webkitExitFullscreen();
+            } else if (document.mozFullScreenElement) {
+                document.mozCancelFullScreen();
+            } else if (document.msFullscreenElement) {
+                document.msExitFullscreen();
+            }
+            videoTimerDisplay.textContent = '';
+            currentCorrectAnswers = 0;
+            updateProgressBar();
+            feedbackDiv.textContent = '';
+            showSection(gameSection);
+            generateQuestion();
+        }
+
+        /**
+         * Resets all settings and progress, clears local storage, and shows the settings page.
+         */
+        function resetAll() {
+            // Using a simple browser confirm for critical reset action
+            if (confirm("Are you sure you want to reset all settings and progress? This cannot be undone.")) {
+                localStorage.removeItem(LOCAL_STORAGE_KEY);
+                localStorage.removeItem(LOCAL_STORAGE_PROGRESS_KEY);
+                localStorage.removeItem(LOCAL_STORAGE_VIDEO_PROGRESS_KEY);
+                resetDefaultSettings(); // Set input fields and state to default values and saves them
+                currentCorrectAnswers = 0; // Explicitly reset progress display
+                updateProgressBar(); // Ensure progress bar is visually reset to 0
+
+                showSection(settingsSection); // Explicitly show settings section after reset
+
+                // Clear feedback and question in case they were visible
+                feedbackDiv.textContent = '';
+                mathQuestionDiv.textContent = '';
+                answerInput.value = '';
+                if (videoTimerId) clearInterval(videoTimerId); // Clear video timer
+            }
+        }
+
+        /**
+         * Sets default values for inputs and updates state.
+         * Also saves these defaults to local storage.
+         */
+        function resetDefaultSettings() {
+            minNumberInput.value = 0;
+            maxNumberInput.value = 100;
+            questionsForRewardInput.value = 10;
+            videoDurationInput.value = 60;
+            youtubeLinksInput.value = ''; // Clear video links
+
+            minNumber = 0;
+            maxNumber = 100;
+            questionsNeeded = 10;
+            videoRewardDuration = 60;
+            youtubeVideoList = [];
+            currentCorrectAnswers = 0; // Reset progress state
+            saveSettings(); // Save defaults
+            saveProgress(); // Save reset progress
+        }
+
+
+        // Event Listeners
+        startButton.addEventListener('click', () => {
+            // Validate settings before starting
+            minNumber = parseInt(minNumberInput.value);
+            maxNumber = parseInt(maxNumberInput.value);
+            questionsNeeded = parseInt(questionsForRewardInput.value);
+            videoRewardDuration = parseInt(videoDurationInput.value);
+            youtubeVideoList = youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== '');
+
+            if (isNaN(minNumber) || isNaN(maxNumber) || minNumber < 0 || maxNumber < 1 || minNumber >= maxNumber) {
+                alert("Please set valid number ranges (Minimum Number must be less than Maximum Number, and both must be valid numbers).");
+                return;
+            }
+            if (isNaN(questionsNeeded) || questionsNeeded < 1) {
+                alert("Please set a valid number of questions for reward (at least 1).");
+                return;
+            }
+            if (isNaN(videoRewardDuration) || videoRewardDuration < 10) {
+                alert("Please set a valid video duration (at least 10 seconds).");
+                return;
+            }
+            // YouTube links are optional, so no strict validation needed here.
+
+            saveSettings();
+            // Create the player instance but do NOT show it yet
+            const playerDiv = document.getElementById('myVideoPlayer');
+            const myUrls = youtubeVideoList.join('\n');
+            const myApiKey = "AIzaSyALE2SNNPJmq5sPywUO3JNUeDALsJ2UGe4"; // <-- Replace with your API key
+
+            // Destroy previous player if exists
+            if (myPlayer && myPlayer.player) {
+                myPlayer.player.destroy();
+                myPlayer = null;
+            }
+            lastPlayerProgress = loadPlayerProgress();
+            myPlayer = new PlaylistVideoPlayer(playerDiv, myUrls, {
+                initialProgress: lastPlayerProgress,
+                ytApiKey: myApiKey,
+                enableFullscreen: true,
+                hideControlsDelay: 3000,
+                paused: true, // Start paused
+            });
+            // Hide the player container initially
+            playerDiv.style.display = "none";
+            // Pause the player immediately after creation (wait for player to be ready)
+            setTimeout(() => {
+                if (myPlayer && myPlayer.player && typeof myPlayer.player.pauseVideo === "function") {
+                    myPlayer.player.pauseVideo();
+                }
+            }, 1000);
+            showSection(gameSection);
+            generateQuestion();
+        });
+
+        submitAnswerButton.addEventListener('click', handleSubmitAnswer);
+        answerInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                handleSubmitAnswer();
+            }
+        });
+
+        resetButton.addEventListener('click', resetAll);
+
+        // Initial Load Logic
+        // Load settings and progress from local storage upon page load.
+        loadSettingsAndProgress();
+
+        // Determine which section to show on initial load based on the state variables
+        // (which were populated by loadSettingsAndProgress).
+        // If 'questionsNeeded' is greater than 0 AND there's at least one YouTube video link,
+        // it implies that the application is configured and can start the game directly.
+        showSection(settingsSection); // Show settings section
+        // if (questionsNeeded > 0 && youtubeVideoList.length > 0) {
+        //     showSection(gameSection); // Show game section
+        //     generateQuestion(); // Start game with loaded settings
+        // } else {
+        //     // Otherwise, show the settings section to allow configuration.
+        // }
+    </script>
+</body>
+</html>
