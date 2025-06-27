@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript">var switchTo5x=true;</script>
+		<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+		<script type="text/javascript" src="http://s.sharethis.com/loader.js"></script>
+		
+		<meta charset="UTF-8">
+		<meta name="keywords" content="soroban, abacus, ábaco, math"/>
+		<meta name="description" content="An online soroban abacus designed to play online and illustrate the use of this ancient oriental calculator"/>
+		<title>Play Online with Soroban Abacus</title>
+		<style>
+			body {
+				/*background: #eeeeee;*/
+				/* background-image: url(PA10-Light-Flowers-1.png); */
+				background-image: url(bg_fabric.jpg);
+				font-family: Tahoma, Geneva, sans-serif;
+				
+			}
+			
+			canvas {
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				outline: none;
+				-webkit-tap-highlight-color: transparent; /* mobile webkit */
+			}    
+			
+			#footer {
+				width:300px;
+				margin-left: auto;
+				margin-right: auto;
+				font-size: 10px;
+			}
+
+			#controls {
+				position: absolute;
+				left: 60px;
+				top: 25px;
+			}
+			
+			fieldset {
+				border: 1px solid #663300;
+				border-radius: 10px;
+				padding: 5px;
+			}
+			
+			legend {
+				background-color: #994c00;
+				border: 1px solid #663300;
+				border-radius: 10px;
+				padding: 5px 10px;
+				text-align: left;
+				color: #ffffff;
+			}
+			
+			.settings {
+				display: inline;
+			}
+			
+			#canvas {
+				/*background: #ffffff;*/
+				cursor: pointer;
+				margin-left: 10px;
+				margin-top: 10px;
+				/*-webkit-box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+				-moz-box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+				-box-shadow: 4px 4px 8px rgba(0,0,0,0.5);*/
+			}
+			
+			#showTime, #delay {
+				width:50px;
+			}
+			
+			#repeat {
+				width: 60px;
+			}
+			
+			.button {
+				background-color: #b8860b;
+				border-radius: 5px;
+			}
+			
+			.button:hover {
+				cursor:pointer;
+			}
+			
+			#answer {
+				position: absolute;
+				width: 100px;
+				height: 50px;
+				border: ridge;
+				background-color: ivory;
+				line-height: 50px;
+				border-radius: 25px;
+				left: 335px;
+				top: 15px;
+				text-align: center;
+				font-weight: 700;
+				color: #994c00;
+				font-size: 40px;
+				display:none;
+			}
+			
+			#flags {
+				float:right;
+			}
+			
+			/*
+			@media all and (min-device-width:481px) and
+					(max-device-width: 1024px) {
+				#numberOfRods {
+					display: none;
+				}
+			}
+			*/
+			
+
+		</style>
+	</head>
+	<body>
+			<div id='controls'>
+			Mode:
+			<select id='mode'>
+				<option value='normal'>Normal</option>
+				<option value='game1'>Guess The Number</option>
+			</select>
+			Debug:
+			<label id='debug'></label>
+		</div>
+		
+		<span id='answer'></span>
+		<div id="flags">
+			<a href="abacus_es.html"><img src="Spain.png" alt="Español" width="32" height="24"></a>
+			<a href="abacus.html"><img src="United_Kingdom.png" alt="English" width="32" height="24"></a>
+		</div>	
+		<canvas id="canvas" width='1520' height='300'>
+			Sorry, this application needs HTML5 canvas support, please upgrade you browser. Thanks
+			Lo siento, esta aplicación necesita soporte para HTML5, por favor actualice su navegador. Gracias
+		</canvas> 
+		<fieldset>
+				<legend>Common Settings</legend>
+			Frame color:
+			<select id='frameColor'>
+				<option value='black'>black</option>
+				<option value='goldenrod' selected>golden</option>
+				<option value='green'>green</option>
+				<option value='navy'>navy</option>
+				<option value='orange'>orange</option>
+				<option value='purple'>purple</option>
+				<option value='red'>red</option>
+			</select>
+			
+			Bead color:
+			<select id='beadColor'>
+				<option value='ivory'>ivory</option>
+				<option value='silver' selected>metal</option>
+				<option value='orange'>orange</option>
+				<option value='red'>red</option>
+				<option value='sienna'>wood</option>
+			</select>
+			
+			Active color:
+			<select id='activeColor'>
+				<option value='none' selected>no change</option>
+				<option value='ivory'>ivory</option>
+				<option value='silver'>metal</option>
+				<option value='orange'>orange</option>
+				<option value='red'>red</option>
+				<option value='sienna'>wood</option>
+			</select>
+
+			Number of Rods:
+			<select id='numberOfRods'>
+				<option value='11'>11</option>
+				<option value='13'>13</option>
+				<option value='15' selected>15</option>
+				<option value='17'>17</option>
+				<option value='19'>19</option>
+				<option value='21'>21</option>
+				<option value='23'>23</option>
+			</select>
+			<input class='button' id='reset' type='button' value='Reset'/> 
+			</fieldset>
+		<br/>
+		<fieldset class="settings" id="fs_normal">
+			<legend>Normal</legend>
+			<input id='soundCheckbox' type='checkbox' name='sound' checked>Sound
+		</fieldset>
+		<fieldset class="settings" id = "fs_gtn">
+			<legend>Guess the Number</legend>
+			From:
+			<input id='from' type='number' min=1 max=1000 size=6 value=1>
+			To:
+			<input id='to' type='number' min=1 max=1000 size=6 value=100>
+			Show Time:
+			<input id='showTime' type='number' value=500> ms.
+			<input class='button' id='go' type='button' value='Go!'/>
+			<input class='button' id='repeat' type='button' value='Again?' disabled/>
+			<input class='button' id='show' type='button' value='Show'/>
+		</fieldset>
+		<audio id="beadSound" src="clac.wav" style="display: none;"></audio>
+<br><br>		
+		<div id=footer>
+			©TocandoTecla.com
+			<a href="mailto:admin@tocandotecla.com?Subject=Abacus">
+			Comments and Suggestions</a>
+		</div>
+
+		<script src='abacus.js'></script>
+		
+		
+		<!-- Lockerz Share BEGIN -->
+		<div class="a2a_kit a2a_default_style">
+		<a class="a2a_dd" href="http://www.addtoany.com/share_save?linkurl=http%3A%2F%2Ftocandotecla.com%2Fmath%2Fabacus%2Fabacus.html&amp;linkname=">Share</a>
+		<span class="a2a_divider"></span>
+		<a class="a2a_button_linkedin"></a>
+		<a class="a2a_button_twitter"></a>
+		<a class="a2a_button_facebook"></a>
+		<a class="a2a_button_email"></a>
+		</div>
+		<script type="text/javascript">
+		var a2a_config = a2a_config || {};
+		a2a_config.linkurl = "http://tocandotecla.com/math/abacus/abacus.html";
+		a2a_config.onclick = 1;
+		a2a_config.num_services = 6;
+		</script>
+		<script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
+		<!-- Lockerz Share END -->
+		
+		<!-- Google Analytics -->
+		<script>
+		  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+		ga('create', 'UA-39946277-1', 'tocandotecla.com');
+		ga('send', 'pageview');
+	      
+	      </script>
+	      
+	      <!-- End Google Analytics -->
+
+	</body>
+</html>

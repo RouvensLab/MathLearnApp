@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Draggable Grid Example</title>
+</head>
+<body>
+    <h2 style="text-align:center;">Draggable Grid Example</h2>
+    <div id="your-container"></div>
+
+    <script src="mathtool.js"></script>
+    <script>
+        // Usage example:
+        // const container = document.getElementById('your-container');
+        // new DraggableGrid(container);
+        const container = document.getElementById('your-container');
+        new DraggableGrid(container, {
+            rows: 10,
+            cols: 10,
+            redChipCount: 5,
+            greenChipCount: 5,
+        });
+    </script>
+</body>
+</html>

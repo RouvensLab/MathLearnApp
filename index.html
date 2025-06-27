@@ -195,12 +195,24 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="input-group">
-                    <label for="minNumber">🔢 Minimum Number:</label>
+                    <label for="minNumber">🔢 Minimum Result:</label>
                     <input type="number" id="minNumber" min="0" value="0" class="shadow-sm">
                 </div>
                 <div class="input-group">
-                    <label for="maxNumber">🎯 Maximum Number:</label>
+                    <label for="maxNumber">🎯 Maximum Result:</label>
                     <input type="number" id="maxNumber" min="1" value="100" class="shadow-sm">
+                </div>
+                <div class="input-group md:col-span-2">
+                    <label>🧮 Question Types:</label>
+                    <div id="questionTypes" class="flex flex-wrap gap-3">
+                        <label><input type="checkbox" class="qtype" value="plus" checked> Plus (+)</label>
+                        <label><input type="checkbox" class="qtype" value="minus" checked> Minus (−)</label>
+                        <label><input type="checkbox" class="qtype" value="multiply"> Multiplication (×)</label>
+                        <label><input type="checkbox" class="qtype" value="divide"> Division (÷)</label>
+                        <label><input type="checkbox" class="qtype" value="fillup10"> Fill up to next ten</label>
+                        <label><input type="checkbox" class="qtype" value="subto10"> Subtract to next ten</label>
+                        <label><input type="checkbox" class="qtype" value="missingadd"> Number + ___ = Number</label>
+                    </div>
                 </div>
                 <div class="input-group">
                     <label for="questionsForReward">🏆 Questions for Reward:</label>
@@ -239,6 +251,7 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
 
             <div class="input-group flex items-center justify-center gap-4">
                 <label for="answerInput" class="sr-only">Your Answer</label>
+                <button id="help" class="button button-secondary">Help</button>
                 <input type="number" id="answerInput" class="w-40 text-center text-2xl p-3 border-blue-400 rounded-lg shadow-md" placeholder="?">
                 <button id="submitAnswerButton" class="button button-primary w-28">Submit</button>
             </div>
@@ -393,7 +406,8 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
                 questionsNeeded: parseInt(questionsForRewardInput.value),
                 videoRewardDuration: parseInt(videoDurationInput.value),
                 youtubeVideoList: youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== ''),
-                ytApiKey: ytApiKeyInput.value.trim()
+                ytApiKey: ytApiKeyInput.value.trim(),
+                questionTypes: getSelectedQuestionTypes(),
             };
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
             ytApiKey = ytApiKeyInput.value.trim();
@@ -453,37 +467,185 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
+        // Question type state
+        let selectedQuestionTypes = ["plus", "minus"];
+
+        // Helper: get selected question types from checkboxes
+        function getSelectedQuestionTypes() {
+            return Array.from(document.querySelectorAll('.qtype:checked')).map(cb => cb.value);
+        }
+
+        // Save and load question types in settings
+        function saveSettings() {
+            const settingsToSave = {
+                minNumber: parseInt(minNumberInput.value),
+                maxNumber: parseInt(maxNumberInput.value),
+                questionsNeeded: parseInt(questionsForRewardInput.value),
+                videoRewardDuration: parseInt(videoDurationInput.value),
+                youtubeVideoList: youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== ''),
+                ytApiKey: ytApiKeyInput.value.trim(),
+                questionTypes: getSelectedQuestionTypes(),
+            };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
+            ytApiKey = ytApiKeyInput.value.trim();
+            console.log("Settings saved:", settingsToSave);
+        }
+
+        function loadSettingsAndProgress() {
+            try {
+                const savedSettings = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
+                if (savedSettings) {
+                    minNumberInput.value = savedSettings.minNumber || 0;
+                    maxNumberInput.value = savedSettings.maxNumber || 100;
+                    questionsForRewardInput.value = savedSettings.questionsNeeded || 10;
+                    videoDurationInput.value = savedSettings.videoRewardDuration || 60;
+                    youtubeLinksInput.value = savedSettings.youtubeVideoList ? savedSettings.youtubeVideoList.join('\n') : '';
+                    ytApiKeyInput.value = savedSettings.ytApiKey || '';
+
+                    // Update game state variables based on loaded settings
+                    minNumber = parseInt(minNumberInput.value);
+                    maxNumber = parseInt(maxNumberInput.value);
+                    questionsNeeded = parseInt(questionsForRewardInput.value);
+                    videoRewardDuration = parseInt(videoDurationInput.value);
+                    youtubeVideoList = youtubeLinksInput.value.split('\n').map(link => link.trim()).filter(link => link !== '');
+                    ytApiKey = ytApiKeyInput.value;
+
+                    // Restore question types
+                    if (savedSettings.questionTypes && Array.isArray(savedSettings.questionTypes)) {
+                        selectedQuestionTypes = savedSettings.questionTypes;
+                        document.querySelectorAll('.qtype').forEach(cb => {
+                            cb.checked = selectedQuestionTypes.includes(cb.value);
+                        });
+                    } else {
+                        selectedQuestionTypes = ["plus", "minus"];
+                        document.querySelectorAll('.qtype').forEach(cb => {
+                            cb.checked = (cb.value === "plus" || cb.value === "minus");
+                        });
+                    }
+                } else {
+                    // If no saved settings, ensure default values are applied to inputs and state
+                    resetDefaultSettings();
+                }
+
+                const savedProgress = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PROGRESS_KEY));
+                if (savedProgress) {
+                    currentCorrectAnswers = savedProgress.currentCorrectAnswers || 0;
+                    updateProgressBar(); // Update bar based on loaded progress
+                }
+            } catch (error) {
+                console.error("Error loading settings or progress from local storage:", error);
+                // Fallback to default values if loading fails
+                resetDefaultSettings();
+            }
+        }
+
+        // Update selectedQuestionTypes on checkbox change
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.qtype').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    selectedQuestionTypes = getSelectedQuestionTypes();
+                });
+            });
+        });
+
         /**
-         * Generates a new math question (addition or subtraction).
+         * Generates a new math question based on selected types and result range.
          */
         function generateQuestion() {
-            const num1 = getRandomInt(minNumber, maxNumber);
-            const num2 = getRandomInt(minNumber, maxNumber);
-            const operator = Math.random() < 0.5 ? '+' : '-'; // Randomly choose + or -
-
-            let answer;
-            let questionText;
-
-            if (operator === '+') {
-                answer = num1 + num2;
-                questionText = `${num1} + ${num2} = ?`;
-            } else {
-                // Ensure the result is not negative for subtraction if num1 < num2
-                if (num1 < num2) {
-                    // Swap them to ensure num1 >= num2 for positive results
-                    questionText = `${num2} - ${num1} = ?`;
-                    answer = num2 - num1;
-                } else {
-                    questionText = `${num1} - ${num2} = ?`;
-                    answer = num1 - num2;
-                }
+            // Defensive: always update selectedQuestionTypes
+            selectedQuestionTypes = getSelectedQuestionTypes();
+            if (!selectedQuestionTypes.length) {
+                // fallback to plus/minus if nothing selected
+                selectedQuestionTypes = ["plus", "minus"];
             }
 
-            currentQuestion = { num1, num2, operator, answer };
+            let num1, num2, operator, answer, questionText;
+
+            // Helper for random int in result range
+            function pickResult() {
+                return getRandomInt(minNumber, maxNumber);
+            }
+
+            // Pick a random type
+            const qtype = selectedQuestionTypes[Math.floor(Math.random() * selectedQuestionTypes.length)];
+
+            if (qtype === "plus") {
+                // a + b = result, result in [min,max]
+                answer = pickResult();
+                num1 = getRandomInt(minNumber, answer);
+                num2 = answer - num1;
+                operator = "+";
+                questionText = `${num1} + ${num2} = ?`;
+                answer = num1 + num2;
+            } else if (qtype === "minus") {
+                // a - b = result, result in [min,max], a >= b
+                answer = pickResult();
+                num2 = getRandomInt(minNumber, maxNumber-answer);
+                num1 = answer + num2;
+                operator = "-";
+                questionText = `${num1} - ${num2} = ?`;
+                answer = num1 - num2;
+            } else if (qtype === "multiply") {
+                // a * b = result, result in [min,max]
+                let tries = 0;
+                do {
+                    num1 = getRandomInt(1, maxNumber);
+                    num2 = getRandomInt(1, maxNumber);
+                    answer = num1 * num2;
+                    tries++;
+                } while ((answer < minNumber || answer > maxNumber) && tries < 100);
+                operator = "×";
+                questionText = `${num1} × ${num2} = ?`;
+            } else if (qtype === "divide") {
+                // a / b = result, result in [min,max], integer division
+                let tries = 0;
+                do {
+                    answer = pickResult();
+                    num2 = getRandomInt(1, maxNumber);
+                    num1 = answer * num2;
+                    tries++;
+                } while ((num1 < minNumber || num1 > maxNumber || num2 === 0) && tries < 100);
+                operator = "÷";
+                questionText = `${num1} ÷ ${num2} = ?`;
+            } else if (qtype === "fillup10") {
+                // fill up to next ten: n + ? = next ten
+                num1 = getRandomInt(minNumber, maxNumber - 1);
+                let nextTen = Math.ceil((num1 + 1) / 10) * 10;
+                num2 = nextTen - num1;
+                operator = "+";
+                questionText = `${num1} + ___ = ${nextTen}`;
+                answer = num2;
+            } else if (qtype === "subto10") {
+                // subtract to next ten: n - ? = prev ten
+                num1 = getRandomInt(minNumber + 1, maxNumber);
+                let prevTen = Math.floor((num1 - 1) / 10) * 10;
+                num2 = num1 - prevTen;
+                operator = "-";
+                questionText = `${num1} - ___ = ${prevTen}`;
+                answer = num2;
+            } else if (qtype === "missingadd") {
+                // number + ___ = number
+                num1 = getRandomInt(minNumber, maxNumber - 1);
+                num2 = getRandomInt(num1 + 1, maxNumber);
+                let missing = num2 - num1;
+                operator = "+";
+                questionText = `${num1} + ___ = ${num2}`;
+                answer = missing;
+            } else {
+                // fallback: plus
+                answer = pickResult();
+                num1 = getRandomInt(minNumber, answer);
+                num2 = answer - num1;
+                operator = "+";
+                questionText = `${num1} + ${num2} = ?`;
+                answer = num1 + num2;
+            }
+
+            currentQuestion = { num1, num2, operator, answer, qtype };
             mathQuestionDiv.textContent = questionText;
-            answerInput.value = ''; // Clear previous answer
-            feedbackDiv.textContent = ''; // Clear feedback
-            answerInput.focus(); // Focus on the input field
+            answerInput.value = '';
+            feedbackDiv.textContent = '';
+            answerInput.focus();
         }
 
         /**
@@ -765,6 +927,96 @@ https://www.youtube.com/watch?v=some_other_video"></textarea>
         // } else {
         //     // Otherwise, show the settings section to allow configuration.
         // }
+    </script>
+    <script src="mathtool.js"></script>
+    <script>
+        // Helper: Show abacus for the current question
+        function showAbacusHelper(num1, num2, operator) {
+            // Create overlay
+            let overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.background = 'rgba(0,0,0,0.4)';
+            overlay.style.zIndex = '9999';
+            overlay.style.display = 'flex';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+
+            // Create abacus container
+            let abacusContainer = document.createElement('div');
+            abacusContainer.style.background = '#fff';
+            abacusContainer.style.borderRadius = '20px';
+            abacusContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18)';
+            abacusContainer.style.padding = '24px 24px 12px 24px';
+            abacusContainer.style.position = 'relative';
+            abacusContainer.style.display = 'flex';
+            abacusContainer.style.flexDirection = 'column';
+            abacusContainer.style.alignItems = 'center';
+
+            // Close button
+            let closeBtn = document.createElement('button');
+            closeBtn.textContent = '✖';
+            closeBtn.style.position = 'absolute';
+            closeBtn.style.top = '10px';
+            closeBtn.style.right = '16px';
+            closeBtn.style.background = 'transparent';
+            closeBtn.style.border = 'none';
+            closeBtn.style.fontSize = '1.5rem';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.onclick = () => document.body.removeChild(overlay);
+            abacusContainer.appendChild(closeBtn);
+
+            // Title
+            let title = document.createElement('div');
+            title.style.fontWeight = 'bold';
+            title.style.fontSize = '1.2rem';
+            title.style.marginBottom = '10px';
+            // Show the operation clearly
+            let opSymbol = operator === '+' ? '+' : '−';
+            // Highlight the operator symbol
+            title.innerHTML = `Abacus Helper: <span style="color:#2193b0;font-weight:bold;font-size:1.5em;vertical-align:middle;">${num1} ${opSymbol} ${num2}</span>`;
+            abacusContainer.appendChild(title);
+
+            // Abacus grid
+            let abacusDiv = document.createElement('div');
+            abacusDiv.id = 'abacus-helper-container';
+            abacusContainer.appendChild(abacusDiv);
+
+            // information on what to do
+            let infoText = document.createElement('p');
+            if (operator === '+') {
+                infoText.textContent = `Fülle den linken Abakus mit den grünen Chips auf.`;
+            } else {
+                infoText.textContent = `Decke die roten Chips mit den grünen Chips ab.`;
+            }
+            infoText.style.marginTop = '10px';
+            infoText.style.fontSize = '1rem';
+            infoText.style.color = '#555';
+            abacusContainer.appendChild(infoText);
+            // Append abacus container to overlay
+            overlay.appendChild(abacusContainer);
+            document.body.appendChild(overlay);
+
+            // Show abacus with num1 red chips, num2 green chips
+            new DraggableGrid(abacusDiv, {
+                rows: 10,
+                cols: 10,
+                redChipCount: num1,
+                greenChipCount: num2,
+            });
+        }
+
+        // Add event listener for the help button
+        document.getElementById('help').addEventListener('click', function () {
+            // Use the numbers and operator from the current question
+            let n1 = currentQuestion.num1;
+            let n2 = currentQuestion.num2;
+            let op = currentQuestion.operator;
+            showAbacusHelper(n1, n2, op);
+        });
     </script>
 </body>
 </html>
